@@ -16,20 +16,24 @@ const Home = () => {
         userLikedJokes: []
     });
     const [counts, setCounts] = useState({ likes: 0, dislikes: 0 });
-    const [isLoading, setIsLoading] = useState(true);
+
 
 
     useEffect(() => {
         const getJoke = async () => {
             const { data } = await axios.get('/api/jokes/getrandomjoke');
             setJoke(data);
-            setIsLoading(false);
         }
         getJoke();
-        //setCounts({ likes: getAmount(true), dislikes: getAmount(false) });
+        setCounts({ likes: getAmount(true), dislikes: getAmount(false) });
         //updateCounts();
         //
     }, []);
+
+
+    const getAmount = (liked) => {
+        return joke.userLikedJokes.filter(ulj => ulj.liked === liked).length;
+    }
 
     const { setup, punchline, userLikedJokes, id } = joke;
     const { likes, dislikes } = counts;
@@ -43,19 +47,18 @@ const Home = () => {
 
     setInterval(updateCounts, 500);
 
-    const getAmount = (liked) => {
-        return userLikedJokes.filter(ulj => ulj.liked === liked).length;
-    }
-
     const onLikeClick = async (like) => {
         await axios.post('/api/jokes/sendfeedback', { jokeId: id, like });
-        await updateCounts();
+        updateCounts();
     }
 
+    const sentFeedback = userLikedJokes.find(u => u.userID === user.id);
+    const canLike = !userLikedJokes.find(u => u.userID === user.id && u.like);
+    const canDislike = userLikedJokes.find(u => u.userID === user.id && u.like);
         
     return ( <div className='container'>
-        {!joke && <h1>Loading....</h1>}
-        {joke &&
+        {!id && <h1>Loading....</h1>}
+        {id &&
             <div className='row'>
                 <div className='col-md-6 offset-md-3 card card-body bg-light'>
                     <div>
@@ -66,8 +69,8 @@ const Home = () => {
                         <Link to='/login'>Login to your account to like/dislike this joke</Link>
                     </div>}
                     {user && <div>
-                    <button className='btn btn-primary' disabled={userLikedJokes.find(u => u.userID === user.id && u.liked)} onClick={() => onLikeClick(true)}>Like</button>
-                    <button className='btn btn-danger' onClick={() => onLikeClick(false)}>Dislike</button>
+                    <button className='btn btn-primary' disabled={canLike} onClick={() => onLikeClick(true)}>Like</button>
+                    <button className='btn btn-danger' disabled={canDislike} onClick={() => onLikeClick(false)}>Dislike</button>
                     </div>}
                     <div>
                         <h4>Likes: {likes}</h4>
