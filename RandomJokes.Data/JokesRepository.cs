@@ -31,6 +31,11 @@ namespace RandomJokes.Data
             return joke;
         }
 
+        public Joke GetJoke(int jokeID)
+        {
+            using var ctx = new JokesDataContext(_connectionString);
+            return ctx.Jokes.Include(j => j.UserLikedJokes).FirstOrDefault(j => j.ID == jokeID);
+        }
         private Joke AddJoke(Joke joke)
         {
             using var ctx = new JokesDataContext(_connectionString);

@@ -68,5 +68,20 @@ namespace RandomJokes.Web.Controllers
             var repo = new JokesRepository(_connectionString);
             return repo.GetCounts(jokeID);
         }
+
+        [HttpGet]
+        [Route("canlike")]
+        public CanLikeViewModel CanLike(int jokeID)
+        {
+            var accountRepo = new AccountRepository(_connectionString);
+            var userID = accountRepo.GetUserId(User.Identity.Name);
+            var jokesRepo = new JokesRepository(_connectionString);
+            var userLikedJokes = jokesRepo.GetJoke(jokeID).UserLikedJokes;
+            return new CanLikeViewModel
+            {
+                DisableLike = userLikedJokes.Any(u => u.UserID == userID && (u.Liked || u.DateTime.AddSeconds(30) >= DateTime.Now)),
+                DisableDislike = userLikedJokes.Any(u => u.UserID == userID && (!u.Liked || u.DateTime.AddSeconds(30) >= DateTime.Now))
+            };
+        }
     }
 }

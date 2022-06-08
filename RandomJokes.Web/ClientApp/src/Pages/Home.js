@@ -7,7 +7,6 @@ import { produce } from 'immer';
 
 const Home = () => {
     const { user } = useAuthContext();
-    //const [count, setCount] = useStateIfMounted(0);
     const [joke, setJoke] = useState({
         id: 0,
         type: '',
@@ -16,7 +15,8 @@ const Home = () => {
         userLikedJokes: []
     });
     const [counts, setCounts] = useState({ likes: 0, dislikes: 0 });
-
+    const [disableLike, setDisableLike] = useState(false);
+    const [disableDislike, setDisableDislike] = useState(false);
 
 
     useEffect(() => {
@@ -26,16 +26,21 @@ const Home = () => {
         }
         getJoke();
         setCounts({ likes: getAmount(true), dislikes: getAmount(false) });
-        //updateCounts();
-        //
+        getDisableStatus();
     }, []);
+
+    const getDisableStatus = async () => {
+        const { data } = await axios.get(`/api/jokes/canlike?jokeID=${id}`);
+        setDisableLike(data.disableLike);
+        setDisableDislike(data.disableDislike);
+    }
 
 
     const getAmount = (liked) => {
         return joke.userLikedJokes.filter(ulj => ulj.liked === liked).length;
     }
 
-    const { setup, punchline, userLikedJokes, id } = joke;
+    const { setup, punchline, id } = joke;
     const { likes, dislikes } = counts;
 
     const updateCounts = async () => {
@@ -50,11 +55,10 @@ const Home = () => {
     const onLikeClick = async (like) => {
         await axios.post('/api/jokes/sendfeedback', { jokeId: id, like });
         updateCounts();
+        getDisableStatus();
     }
 
-    const sentFeedback = userLikedJokes.find(u => u.userID === user.id);
-    const canLike = !userLikedJokes.find(u => u.userID === user.id && u.like);
-    const canDislike = userLikedJokes.find(u => u.userID === user.id && u.like);
+
         
     return ( <div className='container'>
         {!id && <h1>Loading....</h1>}
@@ -69,8 +73,8 @@ const Home = () => {
                         <Link to='/login'>Login to your account to like/dislike this joke</Link>
                     </div>}
                     {user && <div>
-                    <button className='btn btn-primary' disabled={canLike} onClick={() => onLikeClick(true)}>Like</button>
-                    <button className='btn btn-danger' disabled={canDislike} onClick={() => onLikeClick(false)}>Dislike</button>
+                    <button className='btn btn-primary' disabled={disableLike} onClick={() => onLikeClick(true)}>Like</button>
+                    <button className='btn btn-danger' disabled={disableDislike} onClick={() => onLikeClick(false)}>Dislike</button>
                     </div>}
                     <div>
                         <h4>Likes: {likes}</h4>
